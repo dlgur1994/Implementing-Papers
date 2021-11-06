@@ -38,4 +38,52 @@ if not os.path.exists(dir_save_test):
 id_frame = np.arange(nframe)
 np.random.shuffle(id_frame)
 
+## storing train data
+offset_nframe = 0
+
+for i in range(nframe_train):
+    img_label.seek(id_frame[i + offset_nframe])
+    img_input.seek(id_frame[i + offset_nframe])
+
+    label_ = np.asarray(img_label)
+    input_ = np.asarray(img_input)
+
+    np.save(os.path.join(dir_save_train, 'label_%03d.npy' % i), label_)
+    np.save(os.path.join(dir_save_train, 'input_%03d.npy' % i), input_)
+
+## storing validation data
+offset_nframe += nframe_train
+
+for i in range(nframe_val):
+    img_label.seek(id_frame[i + offset_nframe])
+    img_input.seek(id_frame[i + offset_nframe])
+
+    label_ = np.asarray(img_label)
+    input_ = np.asarray(img_input)
+
+    np.save(os.path.join(dir_save_val, 'label_%03d.npy' % i), label_)
+    np.save(os.path.join(dir_save_val, 'input_%03d.npy' % i), input_)
+
+## storing test data
+offset_nframe += nframe_val
+
+for i in range(nframe_test):
+    img_label.seek(id_frame[i + offset_nframe])
+    img_input.seek(id_frame[i + offset_nframe])
+
+    label_ = np.asarray(img_label)
+    input_ = np.asarray(img_input)
+
+    np.save(os.path.join(dir_save_test, 'label_%03d.npy' % i), label_)
+    np.save(os.path.join(dir_save_test, 'input_%03d.npy' % i), input_)
+
 ##
+plt.subplot(121)
+plt.imshow(label_, cmap='gray')
+plt.title('label')
+
+plt.subplot(122)
+plt.imshow(input_, cmap='gray')
+plt.title('input')
+
+plt.show()
