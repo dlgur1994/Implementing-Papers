@@ -5,26 +5,20 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import argparse
 
-import wandb
-
-wandb.init(project="U-Net", entity="kim1lee3")
-
 from model import UNet
 from dataset import *
 from util import *
 
 
 # Parsing Inputs
-parser = argparse.ArgumentParser(description="Train the Model",
+parser = argparse.ArgumentParser(description="Test the Model",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument("--lr", default=1e-3, type=float, dest="lr")
 parser.add_argument("--batch_size", default=4, type=int, dest="batch_size")
-parser.add_argument("--num_epoch", default=100, type=int, dest="num_epoch")
 
 parser.add_argument("--data_dir", default="./datasets_npy", type=str, dest="data_dir")
 parser.add_argument("--ckpt_dir", default="./checkpoint", type=str, dest="ckpt_dir")
-parser.add_argument("--log_dir", default="./log", type=str, dest="log_dir")
 parser.add_argument("--result_dir", default="./result", type=str, dest="result_dir")
 
 args = parser.parse_args()
@@ -33,20 +27,12 @@ args = parser.parse_args()
 # Setting Variables
 lr = args.lr
 batch_size = args.batch_size
-num_epoch = args.num_epoch
 
 data_dir = args.data_dir
 ckpt_dir = args.ckpt_dir
-log_dir = args.log_dir
 result_dir = args.result_dir
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-wandb.config = {
-    "learning_rate": args.lr,
-    "epochs": args.num_epoch,
-    "batch_size": args.batch_size
-}
 
 
 # Making Directories
@@ -94,12 +80,28 @@ with torch.no_grad():
         label = data['label'].to(device)
         output = net(img)
 
-        intersection = np.logical_and(label.cpu().numpy(), output.cpu().numpy())
-        union = np.logical_or(label.cpu().numpy(), output.cpu().numpy())
+        label = label.squeeze(1).cpu().numpy()
+        output = output.squeeze(1).cpu().numpy()
+
+        if label.sum() == 0:
+          continue        
+
+        intersection = np.logical_and(label, output).sum((1,2))
+        union = np.logical_or(label, output).sum((1,2))
         iou_score = np.sum(intersection) / np.sum(union)
+        
+
+        # print(output.shape)
+        # print(label.shape)
+        # output = output.squeeze(1)
+        # print(output.shape)
+        # intersection = (output & label).doublue().sum((1, 2))  # Will be zero if Truth=0 or Prediction=0
+        # union = (outputs | labels).double().sum((1, 2))
+        # iou_score = intersection / union
+        
         iou_scores.append(iou_score)
         print("TEST: BATCH %04d \ %04d | IoU %.4f" % (batch, num_batch_test, iou_score))
-
+        
 #         # saving outputs
 #         img = fn_tonumpy(fn_denorm(img, mean=0.5, std=0.5))
 #         label = fn_tonumpy(label)
